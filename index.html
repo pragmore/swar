@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>swar a tiny JS reactive library</title>
+    <meta data-var="properties" data-value='{"name":"swar","title":"Write less with <em>swar</em>","description":"A tiny JavaScript reactive library","features":["Simple: add the script, the data-* attributes and set the variables","Light, minimal footprint","Use modern JavaScript and HMTL features"]}' >
+    <title data-var="properties">{{ $item.name }}, {{ $item.description.toLowerCase() }}</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
@@ -13,11 +14,15 @@
       href="https://cdn.pragmore.com/2.0.0/balloon/blouse.css?font=Inconsolata&family=monospace&size=16pt"
       crossorigin="anonymous"
     />
+<style>
+.features{ list-style: none }
+.features li::before{ content: "✅ " }
+</style>
   </head>
   <body>
     <nav>
       <input type="checkbox" id="menu-toggle" aria-hidden="true" />
-      <a href="#" data-var="properties">🚲 {{ name }}</a>
+      <a href="#" data-var="properties">🚲 {{ $item.name }}</a>
       <label for="menu-toggle" aria-hidden="true"></label>
       <ul>
         <li><a href="#show-var">Show variable</a></li>
@@ -29,8 +34,8 @@
     <main>
       <section id="show-var">
         <div data-var="properties">
-          <h1 class="text-center">{{ title }}</h1>
-          <p class="text-center">{{ description }}</p>
+          <h1 class="text-center">{{ $item.title }}</h1>
+          <p class="text-center">{{ $item.description }}</p>
         </div>
 
         <p class="text-center text-lg">
@@ -48,8 +53,8 @@
         </p>
 
         <h2>Features</h2>
-        <ul>
-          <li data-for="features">{{ $element }} ✅</li>
+        <ul class="features">
+          <li data-for="features">{{ $item }}</li>
         </ul>
         <p class="msg warn">
           <strong>This library is not production ready!</strong>
@@ -58,30 +63,32 @@
 
       <h2 class="mt-2">Clock</h2>
       <section id="clock">
-        <p data-var="time">Time now is <strong>{{ $var }}</strong> hs</p>
+        <p data-var="time">Time now is <strong>{{ $item }}</strong> hs</p>
       </section>
 
       <section id="todo-list">
         <h2 class="mt-2">TODO list</h2>
+        <meta data-var="todo" data-value='["First task", "Second and final task"]'>
         <form
-          data-onsubmit="if (this.todo.value) { $todo.push(this.todo.value); this.todo.value='' }"
+          data-onsubmit="$todo.push($task()) && $task('')"
         >
           <p>
             <input
-              name="todo"
-              id="title"
+              data-model="task"
               placeholder="New task"
               aria-label="New task"
+              required
             />
           </p>
           <p><button class="main">Create</button></p>
         </form>
+        <p class="mute" data-if="!$todo().length">No tasks</p>
         <ul>
           <li data-for="todo">
-            {{ $element }}
+            {{ $item }}
             <a
               href="#"
-              title="Remove from list {{ $element }}"
+              title="Remove from list {{ $item }}"
               class="btn alt"
               data-onclick="$todo.splice($index, 1)"
               >❌</a
@@ -92,8 +99,8 @@
 
       <section id="fetch-if">
         <h2 class="mt-2">Fetch and if</h2>
-        <p data-if="!externalTodos">Loading table...</p>
-        <table data-if="externalTodos && externalTodos.length > 0">
+        <p data-if="!$externalTodos()">Loading table...</p>
+        <table data-if="$externalTodos() && $externalTodos().length > 0">
           <tr>
             <th>ID</th>
             <th>Title</th>
@@ -102,10 +109,10 @@
           <tr data-for="externalTodos">
             <td>
               {{ $index % 2 ? 'even' : 'odd' }}
-              <strong>{{ $element.id }}</strong>
+              <strong>{{ $item.id }}</strong>
             </td>
-            <td>{{ $element.title }}</td>
-            <td>{{ $element.completed }}</td>
+            <td>{{ $item.title }}</td>
+            <td>{{ $item.completed }}</td>
           </tr>
         </table>
       </section>
@@ -131,16 +138,6 @@
     </footer>
     <script src="swar.js"></script>
     <script id="code-show-var">
-      $properties({
-        name: "swar",
-        title: "Write less with <em>swar</em>",
-        description: "A tiny JavaScript reactive library",
-        features: [
-          "Simple: add the script, the data-* attributes and set the variables",
-          "Light, minimal footprint",
-          "Use modern JavaScript and HMTL features",
-        ],
-      });
       $features($properties().features);
     </script>
     <script id="code-clock">
@@ -157,9 +154,6 @@
       };
       updateTime();
       setInterval(updateTime, 1000);
-    </script>
-    <script id="code-todo-list">
-      $todo(["First task", "Second and final task"]);
     </script>
     <script id="code-fetch-if">
       $externalTodos

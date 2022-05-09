@@ -3,7 +3,7 @@
 'use strict'
 const vars = {}
 const subs = {}
-const render = (template, view, value) => {
+const render = (template, view) => {
   const matches = [...template.matchAll(/\{\{(.+?)\}\}/gm)]
   if (typeof (view) !== 'object') {
     view = {}
@@ -17,7 +17,6 @@ const render = (template, view, value) => {
     }
   }
   // eslint-disable-next-line
-  const $var = value
   matches.forEach(match => {
     const renderedValue = eval(match[1])
     template = template.replace(match[0], renderedValue)
@@ -26,17 +25,12 @@ const render = (template, view, value) => {
 }
 const css = className => '__swar_' + className
 const renderVar = (name, value, element) => {
-  const view = vars[name]
+  const view = {'$item': vars[name]}
   const html = render(element.dataset.template, view, value)
   element.innerHTML = html
   element.hidden = false
 }
 const renderIf = (name, value, element) => {
-  for (var key in vars) {
-    if (Object.prototype.hasOwnProperty.call(vars, key)) {
-      this[key] = vars[key]
-    }
-  }
   const result = eval(element.dataset.if)
   element.hidden = !result
 }
@@ -48,9 +42,9 @@ const renderFor = (name, value, element) => {
   if (!value || typeof value[Symbol.iterator] !== 'function') {
     return null
   }
-  for (const $element of value) {
+  for (const $item of value) {
     const view = vars[name]
-    view.$element = $element
+    view.$item = $item
     view.$index = $index
     const html = render(element.dataset.template, view, value)
     sibling = element.cloneNode()
@@ -67,6 +61,9 @@ const renderFor = (name, value, element) => {
     parentElement.append(sibling)
     $index++
   }
+}
+const renderModel = (name, value, element) => {
+  element.value = value
 }
 
 const letVar = (name) => {
@@ -102,11 +99,8 @@ const subscribe = (name, element) => {
   subs[name].push(element)
   letVar(name)
 }
-const reactive = (name, value) => {
-  if (typeof value === 'undefined') {
-    return vars[name] ?? null
-  }
-  vars[name] = value
+const trigger = (name) => {
+  const value = vars[name]
   if (typeof subs[name] === 'undefined') {
     return null
   }
@@ -114,27 +108,49 @@ const reactive = (name, value) => {
     element.dataset.for && renderFor(name, value, element)
     element.dataset.var && renderVar(name, value, element)
     element.dataset.if && renderIf(name, value, element)
+    element.dataset.model && renderModel(name, value, element)
   }
+}
+const reactive = (name, value) => {
+  if (typeof value === 'undefined') {
+    return vars[name] ?? null
+  }
+  vars[name] = value
+  trigger(name)
   return value
 }
+const getValue = element => element.value
+document.querySelectorAll('[data-var]').forEach(element => {
+  const name = element.dataset.var
+  element.dataset.template = element.innerHTML
+  subscribe(name, element)
+  element.hidden = true
+  if (element.dataset.value) {
+    reactive(name, JSON.parse(element.dataset.value))
+  }
+  trigger(name)
+})
 document.querySelectorAll('[data-for]').forEach(element => {
   const name = element.dataset.for
   element.dataset.template = element.innerHTML
   element.hidden = true
   subscribe(name, element)
+  trigger(name)
 })
 document.querySelectorAll('[data-if]').forEach(element => {
   const name = element.dataset.if.match(/[a-z_][a-z0-9_]*/i)[0]
   element.dataset.template = element.innerHTML
   element.hidden = true
   subscribe(name, element)
-  reactive(name, null)
+  trigger(name)
 })
-document.querySelectorAll('[data-var]').forEach(element => {
-  const name = element.dataset.var
-  element.dataset.template = element.innerHTML
+document.querySelectorAll('[data-model]').forEach(element => {
+  const name = element.dataset.model
+  element.addEventListener('input', event => {
+    reactive(name, getValue(element))
+  })
   subscribe(name, element)
-  element.hidden = true
+  reactive(name, getValue(element))
 })
 document.addEventListener('click', event => {
   const element = event.target
