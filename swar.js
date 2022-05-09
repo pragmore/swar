@@ -123,6 +123,7 @@ document.querySelectorAll('[data-var]').forEach(element => {
   element.dataset.template = element.innerHTML
   subscribe(name, element)
   element.hidden = true
+  element.style.visibility = 'inherit'
   if (element.dataset.value) {
     reactive(name, JSON.parse(element.dataset.value))
   }
@@ -132,6 +133,7 @@ document.querySelectorAll('[data-for]').forEach(element => {
   const name = element.dataset.for
   element.dataset.template = element.innerHTML
   element.hidden = true
+  element.style.visibility = 'inherit'
   subscribe(name, element)
   trigger(name)
 })
@@ -139,6 +141,7 @@ document.querySelectorAll('[data-if]').forEach(element => {
   const name = element.dataset.if.match(/[a-z_][a-z0-9_]*/i)[0]
   element.dataset.template = element.innerHTML
   element.hidden = true
+  element.style.visibility = 'inherit'
   subscribe(name, element)
   trigger(name)
 })
