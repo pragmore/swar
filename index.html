@@ -141,16 +141,14 @@
       $features($properties().features);
     </script>
     <script id="code-clock">
+      const zero = digit => digit < 10 ? "0" + digit: digit
       const updateTime = () => {
-        const zero = (digit) => (digit < 10 ? "0" + digit : digit);
         const date = new Date();
-        $time(
-          date.getHours() +
-            ":" +
-            zero(date.getMinutes()) +
-            ":" +
-            zero(date.getSeconds())
-        );
+        $time([
+          date.getHours(),
+          date.getMinutes(),
+          date.getSeconds(),
+        ].map(zero).join(":"))
       };
       updateTime();
       setInterval(updateTime, 1000);
