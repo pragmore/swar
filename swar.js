@@ -26,7 +26,7 @@ const render = (template, view) => {
 const css = className => '__swar_' + className
 const renderVar = (name, value, element) => {
   const view = {'$item': vars[name]}
-  const html = render(element.dataset.template, view, value)
+  const html = render(element.dataset.template, view)
   element.innerHTML = html
   element.hidden = false
 }
@@ -43,10 +43,8 @@ const renderFor = (name, value, element) => {
     return null
   }
   for (const $item of value) {
-    const view = vars[name]
-    view.$item = $item
-    view.$index = $index
-    const html = render(element.dataset.template, view, value)
+    const view = {$item, $index} 
+    const html = render(element.dataset.template, view)
     sibling = element.cloneNode()
     Object.keys(sibling.dataset).forEach(dataKey => {
       delete sibling.dataset[dataKey]
