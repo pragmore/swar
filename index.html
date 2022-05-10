@@ -21,7 +21,17 @@
     />
     <style>
       body {
-        font: 16pt monospace;
+        font: 14pt monospace;
+      }
+      @media (min-width: 768px) {
+        body {
+          font-size: 16pt;
+        }
+      }
+      @media (min-width: 1200px) {
+        body {
+          font-size: 24pt;
+        }
       }
       .features {
         list-style: none;
@@ -162,20 +172,20 @@
       import swar from "./swar.js";
       swar();
 
-      $features($properties().features)
+      $features($properties().features);
 
       const updateTime = () => {
-        const date = new Date()
+        const date = new Date();
         $time(
           [date.getHours(), date.getMinutes(), date.getSeconds()]
-            .map(digit => (digit < 10 ? "0" + digit : digit))
+            .map((digit) => (digit < 10 ? "0" + digit : digit))
             .join(":")
         );
       };
-      updateTime()
-      setInterval(updateTime, 1000)
+      updateTime();
+      setInterval(updateTime, 1000);
 
-      $users.fetch("https://jsonplaceholder.typicode.com/users")
+      $users.fetch("https://jsonplaceholder.typicode.com/users");
     </script>
   </body>
 </html>
