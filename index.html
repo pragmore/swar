@@ -139,8 +139,9 @@
     </footer>
     <script src="swar.js" type="module"></script>
     <script type="module">
-      import './swar'
-      
+      import swar from './swar'
+      swar()
+
       $features($properties().features);
       
       const zero = digit => digit < 10 ? "0" + digit: digit

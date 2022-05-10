@@ -1,168 +1,147 @@
-/* eslint no-eval: 0 no-new-func: 0 */
+/* eslint no-new-func: 0 */
 /* eslint-env browser */
-'use strict'
 const vars = {}
 const subs = {}
-const render = (template, view) => {
+
+const css = className => '__swar_' + className
+const getValue = el => el.value
+
+const render = (template, item, index = 0) => {
   const matches = [...template.matchAll(/\{\{(.+?)\}\}/gm)]
-  if (typeof (view) !== 'object') {
-    view = {}
-  }
-  for (var key in view) {
-    if (Object.prototype.hasOwnProperty.call(view, key)) {
-      try {
-        window[key] = view[key]
-      } catch (e) {
-      }
-    }
-  }
+  window.$item = item
+  window.$index = index
   matches.forEach(match => {
-    const renderedValue = Function('"use strict";return (' + match[1] + ')').call()
-    template = template.replace(match[0], renderedValue)
+    const val = Function('return (' + match[1] + ')')()
+    template = template.replace(match[0], val)
   })
   return template
 }
-const css = className => '__swar_' + className
-const renderVar = (name, value, element) => {
-  const view = { $item: vars[name] }
-  const html = render(element.dataset.template, view)
-  element.innerHTML = html
-  element.hidden = false
+const renderVar = (val, el) => {
+  el.innerHTML = render(el.dataset.template, val)
+  el.hidden = false
 }
-const renderIf = (name, value, element) => {
-  const result = eval(element.dataset.if)
-  element.hidden = !result
-}
-const renderFor = (name, value, element) => {
-  const parentElement = element.parentElement
-  parentElement.querySelectorAll('.' + css('dynamic')).forEach(el => el.remove())
-  let sibling
-  let $index = 0
-  if (!value || typeof value[Symbol.iterator] !== 'function') {
-    return null
+const renderIf = el => { el.hidden = !Function('return  (' + el.dataset.if + ')')() }
+const renderModel = (val, el) => { el.value = val }
+const renderFor = (name, val, el) => {
+  const parent = el.parentElement
+  parent.querySelectorAll('.' + css('for')).forEach(el => el.remove())
+  if (val && typeof val[Symbol.iterator] === 'function') {
+    let sibling
+    let index = 0
+    for (const item of val) {
+      sibling = el.cloneNode()
+      sibling.hidden = false
+      sibling.dataset.var = name
+      sibling.innerHTML = render(el.dataset.template, item, index)
+      sibling.classList.add(css('for'))
+      sibling.querySelectorAll('[data-onclick]').forEach(el => {
+        el.dataset.onclick = el.dataset.onclick.replace('$index', index)
+      })
+      parent.append(sibling)
+      index++
+    }
   }
-  for (const $item of value) {
-    const view = { $item, $index }
-    const html = render(element.dataset.template, view)
-    sibling = element.cloneNode()
-    Object.keys(sibling.dataset).forEach(dataKey => {
-      delete sibling.dataset[dataKey]
-    })
-    sibling.hidden = false
-    sibling.dataset.var = name
-    sibling.innerHTML = html
-    sibling.classList.add(css('dynamic'))
-    sibling.querySelectorAll('[data-onclick]').forEach(el => {
-      el.dataset.onclick = el.dataset.onclick.replace('$index', $index)
-    })
-    parentElement.append(sibling)
-    $index++
-  }
-}
-const renderModel = (name, value, element) => {
-  element.value = value
 }
 
 export const letVar = (name) => {
   const varName = '$' + name
   if (!window[varName]) {
-    const obj = (value) => reactive(name, value)
+    const obj = val => setVar(name, val)
     obj.fetch = (...params) => fetch.apply(this, params)
       .then(response => response.json())
-      .then(data => reactive(name, data))
-    obj.push = (...elements) => {
-      elements.forEach(element => vars[name]?.push(element))
-      reactive(name, vars[name])
+      .then(data => setVar(name, data))
+    obj.push = (...els) => {
+      els.forEach(el => vars[name]?.push(el))
+      setVar(name, vars[name])
       return vars[name].length
     }
     obj.pop = () => {
-      const element = vars[name].pop()
-      reactive(name, vars[name])
-      return element
+      const el = vars[name].pop()
+      setVar(name, vars[name])
+      return el
     }
     obj.splice = (start, deleteCount) => {
-      const elements = vars[name].splice(start, deleteCount)
-      reactive(name, vars[name])
-      return elements
+      const els = vars[name].splice(start, deleteCount)
+      setVar(name, vars[name])
+      return els
     }
     window[varName] = obj
   }
 }
 
-const subscribe = (name, element) => {
+export const subscribe = (name, el) => {
   if (typeof subs[name] === 'undefined') {
     subs[name] = []
   }
-  subs[name].push(element)
+  subs[name].push(el)
   letVar(name)
 }
-const trigger = (name) => {
-  const value = vars[name]
+
+export const trigger = name => {
   if (typeof subs[name] === 'undefined') {
     return null
   }
-  for (const element of subs[name]) {
-    element.dataset.for && renderFor(name, value, element)
-    element.dataset.var && renderVar(name, value, element)
-    element.dataset.if && renderIf(name, value, element)
-    element.dataset.model && renderModel(name, value, element)
+  const val = vars[name]
+  for (const el of subs[name]) {
+    el.dataset.for && renderFor(name, val, el)
+    el.dataset.var && renderVar(val, el)
+    el.dataset.if && renderIf(el)
+    el.dataset.model && renderModel(val, el)
   }
 }
-const reactive = (name, value) => {
-  if (typeof value === 'undefined') {
+
+const setVar = (name, val) => {
+  if (typeof val === 'undefined') {
     return vars[name] ?? null
   }
-  vars[name] = value
+  vars[name] = val
   trigger(name)
-  return value
+  return val
 }
-const getValue = element => element.value
-document.querySelectorAll('[data-var]').forEach(element => {
-  const name = element.dataset.var
-  element.dataset.template = element.innerHTML
-  subscribe(name, element)
-  element.hidden = true
-  element.style.visibility = 'inherit'
-  if (element.dataset.value) {
-    reactive(name, JSON.parse(element.dataset.value))
+export const setup = () => {
+  const common = (name, el) => {
+    el.dataset.template = el.innerHTML
+    subscribe(name, el)
+    el.hidden = true
+    el.style.visibility = 'inherit'
+    trigger(name)
   }
-  trigger(name)
-})
-document.querySelectorAll('[data-for]').forEach(element => {
-  const name = element.dataset.for
-  element.dataset.template = element.innerHTML
-  element.hidden = true
-  element.style.visibility = 'inherit'
-  subscribe(name, element)
-  trigger(name)
-})
-document.querySelectorAll('[data-if]').forEach(element => {
-  const name = element.dataset.if.match(/[a-z_][a-z0-9_]*/i)[0]
-  element.dataset.template = element.innerHTML
-  element.hidden = true
-  element.style.visibility = 'inherit'
-  subscribe(name, element)
-  trigger(name)
-})
-document.querySelectorAll('[data-model]').forEach(element => {
-  const name = element.dataset.model
-  element.addEventListener('input', event => {
-    reactive(name, getValue(element))
+  document.querySelectorAll('[data-var]').forEach(el => {
+    const name = el.dataset.var
+    if (el.dataset.value) {
+      setVar(name, JSON.parse(el.dataset.value))
+    }
+    common(name, el)
   })
-  subscribe(name, element)
-  reactive(name, getValue(element))
-})
-document.addEventListener('click', event => {
-  const element = event.target
-  if (element.dataset.onclick) {
-    event.preventDefault()
-    Function('"use strict";' + element.dataset.onclick).apply(event.target)
-  }
-}, false)
-document.addEventListener('submit', event => {
-  const element = event.target
-  if (element.dataset.onsubmit) {
-    event.preventDefault()
-    Function('"use strict";' + element.dataset.onsubmit).apply(event.target)
-  }
-}, false)
+  document.querySelectorAll('[data-for]').forEach(el => {
+    common(el.dataset.for, el)
+  })
+  document.querySelectorAll('[data-if]').forEach(el => {
+    const matches = new Set(el.dataset.if.matchAll(/\$([a-z0-9_]+)/gi))
+    matches.forEach(matches => common(matches[1], el))
+  })
+  document.querySelectorAll('[data-model]').forEach(el => {
+    const name = el.dataset.model
+    el.addEventListener('input', ev => {
+      setVar(name, getValue(el))
+    })
+    subscribe(name, el)
+    setVar(name, getValue(el))
+  })
+  document.addEventListener('click', ev => {
+    const el = ev.target
+    if (el.dataset.onclick) {
+      ev.preventDefault()
+      Function(el.dataset.onclick).apply(el)
+    }
+  }, false)
+  document.addEventListener('submit', ev => {
+    const el = ev.target
+    if (el.dataset.onsubmit) {
+      ev.preventDefault()
+      Function(el.dataset.onsubmit).apply(el)
+    }
+  }, false)
+}
+
+export { setup as default }
