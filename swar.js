@@ -31,7 +31,6 @@ const renderFor = (name, val, el) => {
     for (const item of val) {
       sibling = el.cloneNode()
       sibling.hidden = false
-      sibling.dataset.var = name
       sibling.innerHTML = render(el.dataset.template, item, index)
       sibling.classList.add(css('for'))
       sibling.querySelectorAll('[data-onclick]').forEach(el => {

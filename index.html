@@ -118,7 +118,6 @@
           <tr>
             <th>ID</th>
             <th>Name</th>
-            <th>Email</th>
             <th>Company</th>
           </tr>
           <tr data-for="users">
@@ -126,10 +125,9 @@
               {{ $index % 2 ? 'even' : 'odd' }}
               <strong>{{ $item.id }}</strong>
             </td>
-            <td>{{ $item.name }}</td>
             <td>
               <a href="mailto:{{ $item.email.toLowerCase() }}"
-                >{{ $item.email.toLowerCase() }}</a
+                >{{ $item.name }}</a
               >
             </td>
             <td>{{ $item.company.name }}</td>
