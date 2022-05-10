@@ -137,11 +137,12 @@
         </a>
       </span>
     </footer>
-    <script src="swar.js"></script>
-    <script id="code-show-var">
+    <script src="swar.js" type="module"></script>
+    <script type="module">
+      import './swar'
+      
       $features($properties().features);
-    </script>
-    <script id="code-clock">
+      
       const zero = digit => digit < 10 ? "0" + digit: digit
       const updateTime = () => {
         const date = new Date();
@@ -153,8 +154,7 @@
       };
       updateTime();
       setInterval(updateTime, 1000);
-    </script>
-    <script id="code-fetch-if">
+
       $externalTodos
         .fetch("https://jsonplaceholder.typicode.com/todos/?userId=1")
         .then(console.log);

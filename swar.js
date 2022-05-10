@@ -11,14 +11,13 @@ const render = (template, view) => {
   for (var key in view) {
     if (Object.prototype.hasOwnProperty.call(view, key)) {
       try {
-        this[key] = view[key]
+        window[key] = view[key]
       } catch (e) {
       }
     }
   }
-  // eslint-disable-next-line
   matches.forEach(match => {
-    const renderedValue = eval(match[1])
+    const renderedValue = Function('"use strict";return (' + match[1] + ')').call()
     template = template.replace(match[0], renderedValue)
   })
   return template
@@ -64,7 +63,7 @@ const renderModel = (name, value, element) => {
   element.value = value
 }
 
-const letVar = (name) => {
+export const letVar = (name) => {
   const varName = '$' + name
   if (!window[varName]) {
     const obj = (value) => reactive(name, value)

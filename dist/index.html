@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title data-var="properties">{{ $item.name }} a tiny JS reactive library</title>
+    <meta data-var="properties" data-value='{"name":"swar","title":"Write less with <em>swar</em>","description":"A tiny JavaScript reactive library","features":["Simple: add the script, the data-* attributes and set the variables","Light, minimal footprint","Use modern JavaScript and HMTL features"]}' >
+    <title data-var="properties">{{ $item.name }}, {{ $item.description.toLowerCase() }}</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
@@ -13,7 +14,10 @@
       href="https://cdn.pragmore.com/2.0.0/balloon/blouse.css?font=Inconsolata&family=monospace&size=16pt"
       crossorigin="anonymous"
     />
-    <meta data-var="properties" data-value='{"name":"swar","title":"Write less with <em>swar</em>","description":"A tiny JavaScript reactive library","features":["Simple: add the script,the data-* attributes and set the variables","Light, minimal footprint","Use modern JavaScript and HMTL features"]}' />
+<style>
+.features{ list-style: none }
+.features li::before{ content: "✅ " }
+</style>
   </head>
   <body>
     <nav>
@@ -21,15 +25,14 @@
       <a href="#" data-var="properties">🚲 {{ $item.name }}</a>
       <label for="menu-toggle" aria-hidden="true"></label>
       <ul>
-        <li><a href="#model-binding">Model binding</a></li>
-        <li><a href="#conditional-rendering">Conditional rendering</a></li>
+        <li><a href="#show-var">Show variable</a></li>
         <li><a href="#clock">Clock</a></li>
-        <li><a href="#todo-list">TODO list</a></li>
-        <li><a href="#posts">Posts</a></li>
+        <li><a href="#todo-list">TODO List</a></li>
+        <li><a href="#fetch-if">Fetch and if</a></li>
       </ul>
     </nav>
     <main>
-      <section id="template">
+      <section id="show-var">
         <div data-var="properties">
           <h1 class="text-center">{{ $item.title }}</h1>
           <p class="text-center">{{ $item.description }}</p>
@@ -50,57 +53,36 @@
         </p>
 
         <h2>Features</h2>
-        <ul>
-          <li data-for="features">✅ {{ $item }}</li>
+        <ul class="features">
+          <li data-for="features">{{ $item }}</li>
         </ul>
         <p class="msg warn">
           <strong>This library is not production ready!</strong>
         </p>
       </section>
 
-      <h2 class="mt-2" id="model-binding">Model binding</h2>
-      <section>
-        <p><label for="name">Write your name:</label></p>
-        <p><input data-model="name" name="name" /></p>
-        <p data-var="name">Your name is <em>{{ $item }}</em>.</p>
-      </section>
-
-      <h2 class="mt-2" id="conditional-rendering">Conditional rendering</h2>
-      <section>
-        <p>
-          <label>
-            <input type="checkbox" data-model="show" />
-            Show text?
-          </label>
-        </p>
-        <p data-if="show"><strong>Show text is activated!</strong></p>
-        <p data-if="!show">Show text is disabled.</p>
-      </section>
-
-      <h2 class="mt-2" id="clock">Clock</h2>
-      <section>
+      <h2 class="mt-2">Clock</h2>
+      <section id="clock">
         <p data-var="time">Time now is <strong>{{ $item }}</strong> hs</p>
       </section>
 
       <section id="todo-list">
         <h2 class="mt-2">TODO list</h2>
-        <meta
-          data-var="todo"
-          data-value='["First task", "Second and final task"]'
-        >
+        <meta data-var="todo" data-value='["First task", "Second and final task"]'>
         <form
-          data-onsubmit="if ($task()) { $todo.push($task()); $task('') }"
+          data-onsubmit="$todo.push($task()) && $task('')"
         >
           <p>
             <input
               data-model="task"
-              id="title"
               placeholder="New task"
               aria-label="New task"
+              required
             />
           </p>
           <p><button class="main">Create</button></p>
         </form>
+        <p class="mute" data-if="!$todo().length">No tasks</p>
         <ul>
           <li data-for="todo">
             {{ $item }}
@@ -115,23 +97,22 @@
         </ul>
       </section>
 
-      <section id="posts">
-        <h2 class="mt-2">Posts</h2>
-        <h3>Get posts by fetching an API REST</h3>
-        <p data-if="!posts">Loading table...</p>
-        <table data-if="posts && posts.length > 0">
+      <section id="fetch-if">
+        <h2 class="mt-2">Fetch and if</h2>
+        <p data-if="!$externalTodos()">Loading table...</p>
+        <table data-if="$externalTodos() && $externalTodos().length > 0">
           <tr>
             <th>ID</th>
             <th>Title</th>
             <th>Completed</th>
           </tr>
-          <tr data-for="posts">
+          <tr data-for="externalTodos">
             <td>
+              {{ $index % 2 ? 'even' : 'odd' }}
               <strong>{{ $item.id }}</strong>
-              ({{ $index % 2 ? 'even' : 'odd' }})
             </td>
             <td>{{ $item.title }}</td>
-            <td>{{ $item.body }}</td>
+            <td>{{ $item.completed }}</td>
           </tr>
         </table>
       </section>
@@ -156,27 +137,25 @@
       </span>
     </footer>
     <script src="swar.js"></script>
-    <script id="code-template">
+    <script id="code-show-var">
       $features($properties().features);
     </script>
     <script id="code-clock">
+      const zero = digit => digit < 10 ? "0" + digit: digit
       const updateTime = () => {
-        const zero = (digit) => (digit < 10 ? "0" + digit : digit);
         const date = new Date();
-        $time(
-          date.getHours() +
-            ":" +
-            zero(date.getMinutes()) +
-            ":" +
-            zero(date.getSeconds())
-        );
+        $time([
+          date.getHours(),
+          date.getMinutes(),
+          date.getSeconds(),
+        ].map(zero).join(":"))
       };
       updateTime();
       setInterval(updateTime, 1000);
     </script>
-    <script id="code-posts">
-      $posts
-        .fetch("https://jsonplaceholder.typicode.com/posts/?userId=1")
+    <script id="code-fetch-if">
+      $externalTodos
+        .fetch("https://jsonplaceholder.typicode.com/todos/?userId=1")
         .then(console.log);
     </script>
   </body>
