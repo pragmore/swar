@@ -34,14 +34,14 @@
   </head>
   <body>
     <nav>
-      <input type="checkbox" id="menu-toggle" aria-hidden="true" />
+      <input type="checkbox" id="menu-toggle" aria-hidden="true" data-model="menu" />
       <a href="#" data-var="properties">🚲 {{ $item.name }}</a>
       <label for="menu-toggle" aria-hidden="true"></label>
       <ul>
-        <li><a href="#about">About</a></li>
-        <li><a href="#clock">Clock</a></li>
-        <li><a href="#todo-list">TODO List</a></li>
-        <li><a href="#users">Users</a></li>
+        <li><a href="#about" data-onclick="$menu(false)" data-prevent="false">About</a></li>
+        <li><a href="#clock" data-onclick="$menu(false)" data-prevent="false">Clock</a></li>
+        <li><a href="#todo-list" data-onclick="$menu(false)" data-prevent="false">TODO List</a></li>
+        <li><a href="#users" data-onclick="$menu(false)" data-prevent="false">Users</a></li>
       </ul>
     </nav>
     <main>

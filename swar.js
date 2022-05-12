@@ -4,7 +4,7 @@ const vars = {}
 const subs = {}
 
 const css = className => '__swar_' + className
-const getValue = el => el.value
+const getValue = el => (typeof el.checked !== 'undefined' ? el.checked : el.value)
 
 const render = (template, item, index = 0) => {
   const matches = [...template.matchAll(/\{\{(.+?)\}\}/gm)]
@@ -21,7 +21,13 @@ const renderVar = (val, el) => {
   el.hidden = false
 }
 const renderIf = el => { el.hidden = !Function('return  (' + el.dataset.if + ')')() }
-const renderModel = (val, el) => { el.value = val }
+const renderModel = (val, el) => {
+  if (typeof el.checked !== 'undefined') {
+    el.checked = Boolean(val)
+  } else {
+    el.value = val
+  }
+}
 const renderFor = (name, val, el) => {
   const parent = el.parentElement
   parent.querySelectorAll('.' + css('for')).forEach(el => el.remove())
@@ -130,14 +136,18 @@ export const setup = () => {
   document.addEventListener('click', ev => {
     const el = ev.target
     if (el.dataset.onclick) {
-      ev.preventDefault()
+      if (typeof el.dataset.prevent === 'undefined' || el.dataset.prevent === 'true') {
+        ev.preventDefault()
+      }
       Function(el.dataset.onclick).apply(el)
     }
   }, false)
   document.addEventListener('submit', ev => {
     const el = ev.target
     if (el.dataset.onsubmit) {
-      ev.preventDefault()
+      if (typeof el.dataset.prevent === 'undefined' || el.dataset.prevent === 'true') {
+        ev.preventDefault()
+      }
       Function(el.dataset.onsubmit).apply(el)
     }
   }, false)
