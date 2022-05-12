@@ -4,7 +4,7 @@ const vars = {}
 const subs = {}
 
 const css = className => '__swar_' + className
-const getValue = el => (typeof el.checked !== 'undefined' ? el.checked : el.value)
+const getValue = el => (el.type === "checkbox" ? el.checked : el.value)
 
 const render = (template, item, index = 0) => {
   const matches = [...template.matchAll(/\{\{(.+?)\}\}/gm)]
@@ -22,7 +22,7 @@ const renderVar = (val, el) => {
 }
 const renderIf = el => { el.hidden = !Function('return  (' + el.dataset.if + ')')() }
 const renderModel = (val, el) => {
-  if (typeof el.checked !== 'undefined') {
+  if (el.type === "checkbox") {
     el.checked = Boolean(val)
   } else {
     el.value = val
@@ -128,6 +128,7 @@ export const setup = () => {
   document.querySelectorAll('[data-model]').forEach(el => {
     const name = el.dataset.model
     el.addEventListener('input', ev => {
+      console.log(getValue(el),el)
       setVar(name, getValue(el))
     })
     subscribe(name, el)
